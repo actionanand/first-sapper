@@ -157,3 +157,67 @@ If your project lives outside the WSL root directory, [this limitation](https://
 ## Bugs and feedback
 
 Sapper is in early development, and may have the odd rough edge here and there. Please be vocal over on the [Sapper issue tracker](https://github.com/sveltejs/sapper/issues).
+
+## How to deploy `sapper app` to `github pages`?
+
+1. Install gh-pages dependency
+
+```bash
+cd <your-app-name>
+npm i gh-pages --save-dev
+```
+
+2. Modifying package.json file
+
+```json
+"homepage": "https://github.com/<your-github-username>/<your-app-name>"
+```
+
+  - Now, we need to add some scripts under the `scripts` object.
+
+```json
+"scripts": {
+  //...
+  "predeploy": "npm run export",
+  "deploy": "gh-pages -d __sapper__/export/<your-app-name>"
+}
+```
+  - And replace export script with the following:
+
+```json
+"export": "sapper export --basepath <your-app-name> --legacy"
+```
+
+3. Go to your Sapper server.js file.And add the following lines:
+
+```js
+import sirv from 'sirv';
+import polka from 'polka';
+import compression from 'compression';
+import * as sapper from '@sapper/server';
+
+const { PORT, NODE_ENV } = process.env;
+const dev = NODE_ENV === 'development';
+
+const url = dev ? '/' : '<your-app-name>'; // <<-
+
+polka()
+    .use(
+        url, // <<-
+        compression({ threshold: 0 }),
+        sirv('static', { dev }),
+        sapper.middleware()
+    )
+    .listen(PORT, err => {
+        if (err) console.log('error', err);
+    });
+```
+
+4. Now just run `npm run deploy` and wait for the completion.
+
+5. After a minute you can view your app at  https://your-username.github.io/your-app-name/
+
+### Resources
+
+- [Deploy Sapper PWA on GitHub Pages](https://dev.to/agustinl/deploy-sapper-pwa-on-github-pages-2ih1)
+- [How to deploy a React, Angular and Vue project to Github pages](https://deepinder.me/how-to-deploy-a-react-angular-vue-project-to-github-pages)
